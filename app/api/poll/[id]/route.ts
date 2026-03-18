@@ -1,7 +1,13 @@
 import { db } from '@/lib/db'
+import type { Poll } from '@/types'
 
-export async function GET(req: Request, context: any) {
-    const params = await context.params
-    const id = params.id
-  return Response.json(db.polls[id])
+export async function GET(req: Request, { params }: { params: { id: string }}) {
+  const row = db.prepare('SELECT * FROM polls WHERE id=?').get(params.id)
+  if (!row) return new Response('Not found', { status: 404 })
+  const poll: Poll = {
+    id: row.id,
+    dates: JSON.parse(row.dates),
+    votes: JSON.parse(row.votes)
+  }
+  return new Response(JSON.stringify(poll))
 }

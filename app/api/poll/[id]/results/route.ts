@@ -1,14 +1,15 @@
 import { db } from '@/lib/db'
-import { calculateWinner } from '@/lib/winner'
+import { calculateWinner } from '@/lib/calculateWinner'
+import type { Poll } from '@/types'
 
-export async function GET(req: Request, context: any) {
-    const { id } = await context.params
-  const poll = db.polls[id]
-  const votes = db.votes[id]
-
-  if (!poll) {
-    return Response.json({ error: 'Poll not found' }, { status: 404 })
+export async function GET(req: Request, { params }: { params: { id: string }}) {
+  const row = db.prepare('SELECT * FROM polls WHERE id=?').get(params.id)
+  if (!row) return new Response('Not found', { status: 404 })
+  const poll: Poll = {
+    id: row.id,
+    dates: JSON.parse(row.dates),
+    votes: JSON.parse(row.votes)
   }
-
-  return Response.json(calculateWinner(votes || [], poll.dates))
+  const results = calculateWinner(poll.votes, poll.dates)
+  return new Response(JSON.stringify(results))
 }
