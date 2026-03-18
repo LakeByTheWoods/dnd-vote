@@ -10,7 +10,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { Poll } from '@/types'
+import type { Poll } from '@/lib/types'
 
 function SortableItem({ id, selectedDates, setSelectedDates }: {
   id: string

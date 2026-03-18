@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import type { Results } from '@/types'
+import type { Results } from '@/lib/types'
 import { formatDateWithDay } from '@/lib/calculateWinner'
 
 export default function ResultsPage() {
