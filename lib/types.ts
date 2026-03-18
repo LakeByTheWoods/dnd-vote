@@ -1,8 +1,8 @@
-export interface Vote {
-  userId: string
-  // array of available dates ranked by preference (highest priority first)
-  available: string[]
-}
+export type Vote = {
+  name: string;
+  available: string[];
+  priorities: string[];
+};
 
 export interface Poll {
   id: string

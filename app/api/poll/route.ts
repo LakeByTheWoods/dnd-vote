@@ -1,14 +1,19 @@
-import { v4 as uuid } from 'uuid'
-import { db } from '@/lib/db'
-import { NextRequest } from 'next/server'
+import { savePoll } from '@/lib/blob';
+import { v4 as uuid } from 'uuid';
 
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const id = uuid()
-  const dates: string[] = body.dates || []
+export async function POST(req: Request) {
+  const { title, dates } = await req.json();
 
-  db.prepare('INSERT INTO polls (id, dates, votes) VALUES (?, ?, ?)')
-    .run(id, JSON.stringify(dates), JSON.stringify([]))
+  const id = uuid();
 
-  return new Response(JSON.stringify({ id }))
+  const poll = {
+    id,
+    title,
+    dates,
+    votes: [],
+  };
+
+  await savePoll(id, poll);
+
+  return Response.json({ id });
 }

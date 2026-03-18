@@ -1,4 +1,6 @@
-import { db } from '@/lib/db'
+import { getDb } from '@/lib/db';
+
+const db = getDb();
 import type { Poll } from '@/lib/types'
 import { NextRequest } from 'next/server'
 

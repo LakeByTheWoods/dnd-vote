@@ -1,13 +1,24 @@
-import { db } from '@/lib/db'
+import { loadPoll, savePoll } from '@/lib/blob';
 
-export async function POST(req: Request, context: any) {
-    const { id } = await context.params
-  const body = await req.json()
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const { name, available, priorities } = await req.json();
 
-  if (!db.votes[id]) {
-    return Response.json({ error: 'Poll not found' }, { status: 404 })
+  const poll = await loadPoll(params.id);
+
+  if (!poll) {
+    return new Response('Not found', { status: 404 });
   }
 
-  db.votes[id].push(body)
-  return Response.json({ ok: true })
+  poll.votes.push({
+    name,
+    available,
+    priorities,
+  });
+
+  await savePoll(params.id, poll);
+
+  return Response.json({ success: true });
 }

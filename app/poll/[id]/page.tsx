@@ -1,98 +1,97 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
-import { DndContext, closestCenter } from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import type { Poll } from '@/lib/types'
-
-function SortableItem({ id, selectedDates, setSelectedDates }: {
-  id: string
-  selectedDates: string[]
-  setSelectedDates: (dates: string[]) => void
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
-  const style = { transform: CSS.Transform.toString(transform), transition }
-
-  const toggleAvailable = () => {
-    if (selectedDates.includes(id)) {
-      setSelectedDates(selectedDates.filter(d => d !== id))
-    } else {
-      setSelectedDates([...selectedDates, id])
-    }
-  }
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className="border p-3 mb-2 rounded flex justify-between items-center"
-    >
-      <span>{id}</span>
-      <input
-        type="checkbox"
-        checked={selectedDates.includes(id)}
-        onChange={toggleAvailable}
-      />
-    </div>
-  )
-}
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 
 export default function PollPage() {
-  const params = useParams()
-  const id = params.id as string
+  const { id } = useParams();
 
-  const [poll, setPoll] = useState<Poll | null>(null)
-  const [dates, setDates] = useState<string[]>([])
-  const [selectedDates, setSelectedDates] = useState<string[]>([])
+  const [poll, setPoll] = useState<any>(null);
+  const [name, setName] = useState('');
+  const [available, setAvailable] = useState<string[]>([]);
+  const [priorities, setPriorities] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch(`/api/poll/${id}`)
-      .then(res => res.json())
-      .then((data: Poll) => {
-        setPoll(data)
-        setDates(data.dates)
-        setSelectedDates([...data.dates]) // default all available
-      })
-      .catch(console.error)
-  }, [id])
+    async function load() {
+      const res = await fetch(`/api/poll/${id}/results`);
+      const data = await res.json();
 
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event
-    if (active.id !== over?.id) {
-      const oldIndex = dates.indexOf(active.id)
-      const newIndex = dates.indexOf(over.id)
-      setDates(arrayMove(dates, oldIndex, newIndex))
+      setPoll(data);
+      setAvailable(data.dates);
+      setPriorities(data.dates);
     }
+
+    load();
+  }, [id]);
+
+  function toggleAvailable(date: string) {
+    setAvailable((prev) =>
+      prev.includes(date)
+        ? prev.filter((d) => d !== date)
+        : [...prev, date]
+    );
   }
 
-  if (!poll) return <div className="p-6">Loading poll...</div>
+  async function submitVote() {
+    await fetch(`/api/poll/${id}/vote`, {
+      method: 'POST',
+      body: JSON.stringify({
+        name,
+        available,
+        priorities,
+      }),
+    });
+
+    alert('Vote submitted!');
+  }
+
+  if (!poll) return <div className="p-6">Loading...</div>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-4 text-center">Poll</h1>
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={dates} strategy={verticalListSortingStrategy}>
-            {dates.map(date => (
-              <SortableItem
+    <div className="max-w-xl mx-auto p-6 space-y-6">
+      <h1 className="text-2xl font-bold">{poll.title}</h1>
+
+      <input
+        className="w-full border rounded p-2"
+        placeholder="Your name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+
+      <div>
+        <h3 className="font-semibold mb-2">Available Dates</h3>
+
+        <div className="space-y-2">
+          {poll.dates.map((date: string) => {
+            const formatted = new Date(date).toLocaleDateString(
+              undefined,
+              { weekday: 'short', month: 'short', day: 'numeric' }
+            );
+
+            return (
+              <label
                 key={date}
-                id={date}
-                selectedDates={selectedDates}
-                setSelectedDates={setSelectedDates}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+                className="flex items-center gap-3 border p-3 rounded cursor-pointer hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={available.includes(date)}
+                  onChange={() => toggleAvailable(date)}
+                  className="w-4 h-4"
+                />
+                <span>{formatted}</span>
+              </label>
+            );
+          })}
+        </div>
       </div>
+
+      <button
+        onClick={submitVote}
+        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+      >
+        Submit Vote
+      </button>
     </div>
-  )
+  );
 }
