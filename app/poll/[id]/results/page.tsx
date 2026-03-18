@@ -44,7 +44,7 @@ export default function ResultsPage() {
         {availableDates.length > 0 && (
           <>
             <h2 className="font-semibold mb-2">Available dates:</h2>
-            {availableDates.map(date => (
+            {availableDates.map((date: string) => (
               <div key={date} className="border p-3 mb-2 rounded">
                 <div className="font-semibold">{date} ({formatDateWithDay(date)})</div>
                 <div className="text-sm">Score: {data.scores[date]}</div>
@@ -57,7 +57,7 @@ export default function ResultsPage() {
         {disqualifiedDates.length > 0 && (
           <>
             <h2 className="font-semibold mt-4 mb-2 text-red-600">Disqualified dates:</h2>
-            {disqualifiedDates.map(date => (
+            {disqualifiedDates.map((date: string) => (
               <div
                 key={date}
                 className="border p-3 mb-2 rounded shadow bg-gray-100 opacity-50"
