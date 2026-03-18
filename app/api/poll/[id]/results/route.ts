@@ -1,11 +1,14 @@
 import { loadPoll } from '@/lib/blob';
 import { calculateWinner } from '@/lib/calculateWinner';
+import { NextRequest } from 'next/server';
 
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
-  const poll = await loadPoll(params.id);
+  const { id } = await context.params;
+
+  const poll = await loadPoll(id);
 
   if (!poll) {
     return new Response('Not found', { status: 404 });
