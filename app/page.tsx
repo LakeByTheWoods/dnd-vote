@@ -1,46 +1,102 @@
 'use client'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function Home() {
-  const [title, setTitle] = useState('D&D Session')
-  const [dates, setDates] = useState([''])
+export default function CreatePollPage() {
   const router = useRouter()
+  const [dates, setDates] = useState<string[]>([])
+  const [newDate, setNewDate] = useState('')
+  const [pollName, setPollName] = useState('')
 
-  const updateDate = (i: number, value: string) => {
-    const copy = [...dates]
-    copy[i] = value
-    setDates(copy)
+  // Add a new date
+  const addDate = () => {
+    if (newDate && !dates.includes(newDate)) {
+      setDates([...dates, newDate])
+      setNewDate('')
+    }
   }
 
-  const addDate = () => setDates([...dates, ''])
+  // Remove a date
+  const removeDate = (dateToRemove: string) => {
+    setDates(dates.filter(d => d !== dateToRemove))
+  }
 
+  // Submit poll to backend
   const createPoll = async () => {
+    if (!pollName || dates.length === 0) {
+      alert('Please enter a poll name and at least one date.')
+      return
+    }
+
     const res = await fetch('/api/poll', {
       method: 'POST',
-      body: JSON.stringify({ title, dates: dates.filter(Boolean) })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: pollName, dates }),
     })
-    const data = await res.json()
-    router.push(`/poll/${data.id}`)
+
+    if (res.ok) {
+      const { id } = await res.json()
+      router.push(`/poll/${id}`)
+    } else {
+      alert('Failed to create poll')
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-4 text-center">🎲 Plan Your Session</h1>
+    <div className="max-w-md mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Create D&D Poll</h1>
 
-        <input className="border p-2 w-full mb-4 rounded" value={title} onChange={e => setTitle(e.target.value)} />
+      {/* Poll Name */}
+      <input
+        type="text"
+        placeholder="Poll name"
+        value={pollName}
+        onChange={e => setPollName(e.target.value)}
+        className="border p-2 rounded w-full mb-4"
+      />
 
-        {dates.map((d, i) => (
-          <input key={i} type="date" className="border p-2 w-full mb-2 rounded" value={d} onChange={e => updateDate(i, e.target.value)} />
-        ))}
-
-        <button onClick={addDate} className="text-sm text-blue-500 mb-4">+ Add Date</button>
-
-        <button onClick={createPoll} className="bg-blue-600 hover:bg-blue-700 text-white p-2 w-full rounded">
-          Create Poll
+      {/* Add new date */}
+      <div className="flex mb-4">
+        <input
+          type="date"
+          value={newDate}
+          onChange={e => setNewDate(e.target.value)}
+          className="border p-2 rounded flex-1"
+        />
+        <button
+          onClick={addDate}
+          className="ml-2 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Add
         </button>
       </div>
+
+      {/* List of dates with remove buttons */}
+      <ul>
+        {dates.map(date => (
+          <li
+            key={date}
+            className="flex justify-between items-center border p-2 mb-1 rounded"
+          >
+            <span>{date}</span>
+            <button
+              onClick={() => removeDate(date)}
+              className="text-red-500 font-bold px-2"
+            >
+              ✕
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* Create Poll Button */}
+      <button
+        onClick={createPoll}
+        className="mt-4 px-4 py-2 bg-green-500 text-white rounded w-full"
+      >
+        Create Poll
+      </button>
     </div>
   )
 }

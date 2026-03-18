@@ -1,41 +1,38 @@
 import type { Vote, Results } from './types'
 
+
 export function calculateWinner(votes: Vote[], allDates: string[]): Results {
-  const dateSelectionCounts: Record<string, number> = {}
-  allDates.forEach(d => (dateSelectionCounts[d] = 0))
+  const dateScores: Record<string, number> = {}
 
+  // Determine disqualified dates (any date that someone is not available for)
+  const disqualifiedDates = allDates.filter(date =>
+    votes.some(v => !v.available.includes(date))
+  )
+
+  // Only consider valid dates
+  const validDates = allDates.filter(d => !disqualifiedDates.includes(d))
+
+  // Initialize scores
+  validDates.forEach(date => (dateScores[date] = 0))
+
+  // Scoring: geometric progression, first = 1, next = prev * 2/3
   votes.forEach(vote => {
-    vote.preferences.forEach(date => {
-      if (dateSelectionCounts[date] !== undefined) dateSelectionCounts[date]++
-    })
-  })
-
-  const disqualified = Object.keys(dateSelectionCounts).filter(d => dateSelectionCounts[d] === 0)
-  const validDates = allDates.filter(d => !disqualified.includes(d))
-
-  const scores: Record<string, number> = {}
-  const first: Record<string, number> = {}
-  validDates.forEach(d => {
-    scores[d] = 0
-    first[d] = 0
-  })
-
-  votes.forEach(vote => {
-    vote.preferences.forEach((date, i) => {
-      if (!disqualified.includes(date)) {
-        const pts = validDates.length - i
-        scores[date] += pts
-        if (i === 0) first[date]++
+    let score = 1
+    vote.ranking.forEach(date => {
+      if (validDates.includes(date)) {
+        dateScores[date] += score
+        score *= 2 / 3 // reduce by 2/3 for next preference
       }
     })
   })
 
-  const winner = validDates.sort((a, b) => {
-    if (scores[b] !== scores[a]) return scores[b] - scores[a]
-    return first[b] - first[a]
-  })[0] || null
+  // Determine winner (highest score)
+  const winner = validDates.reduce(
+    (best, date) => (dateScores[date] > (dateScores[best] ?? 0) ? date : best),
+    validDates[0] ?? null
+  )
 
-  return { winner, scores, first, disqualified }
+  return { scores: dateScores, winner, disqualifiedDates }
 }
 
 // helper to display day of week
