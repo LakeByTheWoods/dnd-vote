@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { calculateWinner } from '@/lib/calculateWinner'
+import { calculateWinner } from '@/lib/winner'
 import type { Poll } from '@/types'
 
 export async function GET(req: Request, { params }: { params: { id: string }}) {
