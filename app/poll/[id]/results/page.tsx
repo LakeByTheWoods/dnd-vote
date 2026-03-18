@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { formatDateWithDay } from '@/lib/winner'
+import type { Results } from '@/types'
+import { formatDateWithDay } from '@/lib/calculateWinner'
 
 export default function ResultsPage() {
   const params = useParams()
   const id = params.id as string
-
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<Results | null>(null)
 
   useEffect(() => {
     const fetchData = () => {
@@ -17,18 +17,12 @@ export default function ResultsPage() {
         .then(setData)
         .catch(console.error)
     }
-
     fetchData()
-    const interval = setInterval(fetchData, 3000) // live update
+    const interval = setInterval(fetchData, 3000)
     return () => clearInterval(interval)
   }, [id])
 
-  if (!data || !data.scores) {
-    return <div className="p-6">Loading results...</div>
-  }
-
-  const disqualifiedDates = data.disqualified || []
-  const availableDates = Object.keys(data.scores)
+  if (!data) return <div className="p-6">Loading results...</div>
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -41,10 +35,10 @@ export default function ResultsPage() {
           </div>
         )}
 
-        {availableDates.length > 0 && (
+        {Object.keys(data.scores).length > 0 && (
           <>
             <h2 className="font-semibold mb-2">Available dates:</h2>
-            {availableDates.map((date: string) => (
+            {Object.keys(data.scores).map((date: string) => (
               <div key={date} className="border p-3 mb-2 rounded">
                 <div className="font-semibold">{date} ({formatDateWithDay(date)})</div>
                 <div className="text-sm">Score: {data.scores[date]}</div>
@@ -54,28 +48,16 @@ export default function ResultsPage() {
           </>
         )}
 
-        {disqualifiedDates.length > 0 && (
+        {data.disqualified.length > 0 && (
           <>
             <h2 className="font-semibold mt-4 mb-2 text-red-600">Disqualified dates:</h2>
-            {disqualifiedDates.map((date: string) => (
-              <div
-                key={date}
-                className="border p-3 mb-2 rounded shadow bg-gray-100 opacity-50"
-              >
+            {data.disqualified.map((date: string) => (
+              <div key={date} className="border p-3 mb-2 rounded shadow bg-gray-100 opacity-50">
                 {date} ({formatDateWithDay(date)})
               </div>
             ))}
           </>
         )}
-
-        <button
-          onClick={() =>
-            navigator.clipboard.writeText(window.location.href.replace('/results', ''))
-          }
-          className="mt-4 text-sm text-blue-500 w-full"
-        >
-          Copy Poll Link
-        </button>
       </div>
     </div>
   )
