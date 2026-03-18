@@ -1,8 +1,16 @@
 import { savePoll } from '@/lib/blob';
+import { validateCreatePollInput } from '@/lib/validation';
 import { v4 as uuid } from 'uuid';
 
 export async function POST(req: Request) {
-  const { title, dates } = await req.json();
+  const payload = await req.json();
+  const result = validateCreatePollInput(payload);
+
+  if (!result.success) {
+    return Response.json({ error: result.message }, { status: 400 });
+  }
+
+  const { title, dates } = result.data;
 
   const id = uuid();
 

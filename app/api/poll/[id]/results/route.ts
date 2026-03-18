@@ -1,5 +1,6 @@
 import { loadPoll } from '@/lib/blob';
 import { calculateWinner } from '@/lib/calculateWinner';
+import { validatePoll } from '@/lib/validation';
 import { NextRequest } from 'next/server';
 
 export async function GET(
@@ -14,7 +15,12 @@ export async function GET(
     return new Response('Not found', { status: 404 });
   }
 
-  const results = calculateWinner(poll.votes, poll.dates);
+  const parsedPoll = validatePoll(poll);
+  if (!parsedPoll.success) {
+    return Response.json({ error: parsedPoll.message }, { status: 500 });
+  }
 
-  return Response.json({ ...poll, results });
+  const results = calculateWinner(parsedPoll.data.votes, parsedPoll.data.dates);
+
+  return Response.json({ ...parsedPoll.data, results });
 }

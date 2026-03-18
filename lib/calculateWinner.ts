@@ -14,8 +14,9 @@ export function calculateWinner(votes: Vote[], allDates: string[]): Results {
   validDates.forEach(date => (dateScores[date] = 0))
 
   votes.forEach(vote => {
-    vote.available.forEach((date, index) => {
-      if (!dateScores[date]) return
+    const rankedDates = vote.priorities.length > 0 ? vote.priorities : vote.available
+    rankedDates.forEach((date, index) => {
+      if (!(date in dateScores)) return
       // weighted score: highest priority = 1, next = 2/3, next = (2/3)^2, etc.
       dateScores[date] += Math.pow(2 / 3, index)
     })

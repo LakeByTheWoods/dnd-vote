@@ -25,11 +25,20 @@ export default function CreatePollPage() {
   async function createPoll() {
     const res = await fetch('/api/poll', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         title,
         dates: dates.filter(Boolean),
       }),
     });
+
+    if (!res.ok) {
+      const error = await res.json();
+      alert(error.error ?? 'Could not create poll.');
+      return;
+    }
 
     const data = await res.json();
     router.push(`/poll/${data.id}`);

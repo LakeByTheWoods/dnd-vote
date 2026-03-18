@@ -33,14 +33,23 @@ export default function PollPage() {
   }
 
   async function submitVote() {
-    await fetch(`/api/poll/${id}/vote`, {
+    const res = await fetch(`/api/poll/${id}/vote`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         name,
         available,
         priorities,
       }),
     });
+
+    if (!res.ok) {
+      const error = await res.json();
+      alert(error.error ?? 'Could not submit vote.');
+      return;
+    }
 
     alert('Vote submitted!');
   }
