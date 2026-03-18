@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { calculateWinner } from '@/lib/calculateWinner'
-import type { Poll } from '@/types'
+import type { Poll } from '@/lib/types'
 import { NextRequest } from 'next/server'
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
