@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import type { Results } from '@/types'
-import { formatDateWithDay } from '@/lib/winner'
+import { formatDateWithDay } from '@/lib/calculateWinner'
 
 export default function ResultsPage() {
   const params = useParams()
