@@ -2,37 +2,36 @@ import type { Vote, Results } from './types'
 
 
 export function calculateWinner(votes: Vote[], allDates: string[]): Results {
-  const dateScores: Record<string, number> = {}
-
   // Determine disqualified dates (any date that someone is not available for)
   const disqualifiedDates = allDates.filter(date =>
     votes.some(v => !v.available.includes(date))
   )
 
   // Only consider valid dates
-  const validDates = allDates.filter(d => !disqualifiedDates.includes(d))
+  const validDates = allDates.filter(date => !disqualifiedDates.includes(date))
 
-  // Initialize scores
+  const dateScores: Record<string, number> = {}
   validDates.forEach(date => (dateScores[date] = 0))
 
-  // Scoring: geometric progression, first = 1, next = prev * 2/3
   votes.forEach(vote => {
-    let score = 1
-    vote.ranking.forEach(date => {
-      if (validDates.includes(date)) {
-        dateScores[date] += score
-        score *= 2 / 3 // reduce by 2/3 for next preference
-      }
+    vote.available.forEach((date, index) => {
+      if (!dateScores[date]) return
+      // weighted score: highest priority = 1, next = 2/3, next = (2/3)^2, etc.
+      dateScores[date] += Math.pow(2 / 3, index)
     })
   })
 
-  // Determine winner (highest score)
-  const winner = validDates.reduce(
-    (best, date) => (dateScores[date] > (dateScores[best] ?? 0) ? date : best),
-    validDates[0] ?? null
-  )
+  const winner = validDates.reduce((best, date) => {
+    return dateScores[date] > (best.score ?? -1)
+      ? { date, score: dateScores[date] }
+      : best
+  }, {} as { date?: string; score?: number }).date || null
 
-  return { scores: dateScores, winner, disqualifiedDates }
+  return {
+    winner,
+    disqualifiedDates,
+    scores: dateScores,
+  }
 }
 
 // helper to display day of week
