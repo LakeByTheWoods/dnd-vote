@@ -1,25 +1,20 @@
-import { loadPoll, savePoll } from '@/lib/blob';
+import { loadPoll, saveVote } from '@/lib/blob';
+import { NextRequest } from 'next/server';
 
 export async function POST(
-  req: Request,
-  context: { params: Promise<{ id: string }> }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }  // ✅ async params
 ) {
-    const { id } = await context.params;
+  const { id } = await context.params;  // ✅ await it
   const { name, available, priorities } = await req.json();
 
-  const poll = await loadPoll(params.id);
+  const poll = await loadPoll(id);
 
   if (!poll) {
     return new Response('Not found', { status: 404 });
   }
 
-  poll.votes.push({
-    name,
-    available,
-    priorities,
-  });
+  await saveVote(id, { name, available, priorities });
 
-  await savePoll(params.id, poll);
-
-  return Response.json({ success: true });
+  return Response.json({ status: 'ok' });
 }
